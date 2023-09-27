@@ -1,9 +1,21 @@
-import Image from 'next/image'
+"use client"
+import Canvas from '@/components/Canvas'
+import ToolBox from '@/components/ToolBox'
+import { Provider } from 'react-redux'
+import { store } from '@/store/store'
+
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      White board
-    </main>
+
+
+    <Provider store={store}>
+      <div className='relative'>
+        <Canvas />
+        <ToolBox />
+      </div>
+    </Provider>
+
+
   )
 }
