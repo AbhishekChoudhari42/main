@@ -11,7 +11,7 @@ export default function Home() {
 
     <Provider store={store}>
       <div className='relative'>
-        <Canvas />
+        <Canvas/>
         <ToolBox />
       </div>
     </Provider>

@@ -44,9 +44,9 @@ const ToolBox = () => {
           </div>
           <div
             className={`p-2  cursor-pointer rounded ${
-              tool === "circle" ? "bg-[#bbd0ff]" : ""
+              tool === "ellipse" ? "bg-[#bbd0ff]" : ""
             } hover:bg-[#bbd0ff] hover:text-white `}
-            onClick={() => dispatch(changeTool("circle"))}
+            onClick={() => dispatch(changeTool("ellipse"))}
           >
             <FaRegCircle color="#2b2d42" className="font-bold" size={18} />
           </div>
