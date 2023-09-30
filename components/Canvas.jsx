@@ -160,6 +160,8 @@ const Canvas = () => {
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
+        canvas.height = window.innerHeight
+        canvas.width = window.innerWidth
         const roughCanvas = rough.canvas(canvas);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         elements.map((element) => roughCanvas.draw(element.element));
@@ -170,9 +172,6 @@ const Canvas = () => {
         <canvas
             ref={canvasRef}
             className="bg-[#f7f7ff]"
-            width={window.innerWidth}
-            height={window.innerHeight}
-
             onMouseDown={mouseDownHandler}
             onMouseMove={mouseMoveHandler}
             onMouseUp={mouseUpHandler}
