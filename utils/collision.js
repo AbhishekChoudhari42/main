@@ -4,6 +4,11 @@ export function isIntersecting(x,y,x1,y1,x2,y2,shape){
 
     
     switch(shape){
+        case "line":
+
+            
+
+            break;
         case "rectangle":
             let maxX = Math.max(x1,x2)
             let minX = Math.min(x1,x2)
