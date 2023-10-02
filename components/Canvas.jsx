@@ -33,20 +33,30 @@ const generateElement = (x1, y1, x2, y2, tool) => {
     return { x1, y1, x2, y2, element };
 };
 
-
+const minmax = (x1,y1,x2,y2) => {
+    return {
+        minX: Math.min(x1,x2),
+        minY: Math.min(y1,y2),
+        maxX: Math.max(x1,x2),
+        maxY: Math.max(y1,y2),
+    }
+}
 
 const Canvas = () => {
 
     //for testing
-    // const noOfElements = 10000
-    // const [elements, setElements] = useState(new Array(noOfElements).fill(0).map(()=>generateElement(Math.random()*500,Math.random()*500,Math.random()*500,Math.random()*500,"rectangle")));
+    const noOfElements = 3
+    const [elements, setElements] = useState(new Array(noOfElements).fill(0).map(()=>generateElement(Math.random()*500 + 20,Math.random()*500 + 20,Math.random()*500 + 20,Math.random()*500 + 20,"rectangle")));
 
-    const [elements, setElements] = useState([]);
+    // const [elements, setElements] = useState([]);
     const [drawing, setDrawing] = useState(false);
     const [moving, setMoving] = useState(false)
-    const [selRectMove, setSelRectMove] = useState(false)
+    const [initialPoint,setInitialPoint] = useState({x:-1,y:-1})
+
+    const [selectRectDrawing, setSelectRectDrawing] = useState(false)
     const [selectedElements, setSelectedElements] = useState([])
     const [selectionRectangle, setSelectionRectangle] = useState(null)
+    
     const canvasRef = useRef(null);
 
     const tool = useSelector((state) => state.toolbox.tool);
@@ -58,63 +68,64 @@ const Canvas = () => {
             let intersection = isIntersecting(x, y, elements[i].x1, elements[i].y1, elements[i].x2, elements[i].y2, elements[i].element.shape)
 
             if (intersection.collision) {
-                console.log(intersection,i)
                 return ({ x1: elements[i].x1, x2: elements[i].x2, y1: elements[i].y1, y2: elements[i].y2, index: i, mouseX: x, mouseY: y })
             }
         }
 
         return null
     }
-
-
+    
+   
     const mouseDownHandler = (e) => {
         const { clientX, clientY } = e;
+        
+        setInitialPoint({x:clientX,y:clientY})
+        initialPoint.x = clientX
+        initialPoint.y = clientY
+
+        // console.log(initialPoint)
+
 
         if (tool == "selector") {
+            
+            // console.log("coord",clientX,clientY)
+            let element = getSelectedElement(clientX, clientY)
+            
+            
+            if(!selectionRectangle && !element){
+    
+                setMoving(false)
+                // console.log("selection rectangle start")
+                setSelectedElements([])
+                setSelectRectDrawing(true)
+                setSelectionRectangle({ x1: clientX, y1: clientY, x2: clientX, y2: clientY,mouseX:null,mouseY:null})
+                return
+            }
 
             if(selectionRectangle){
 
-                let minX = Math.min(selectionRectangle.x1, selectionRectangle.x2)
-                let maxX = Math.max(selectionRectangle.x1, selectionRectangle.x2)
-                let minY = Math.min(selectionRectangle.y1, selectionRectangle.y2)
-                let maxY = Math.max(selectionRectangle.y1, selectionRectangle.y2)
+                setSelectRectDrawing(false)
+
+                let {minX,minY,maxX,maxY} = minmax(selectionRectangle.x1,selectionRectangle.y1,selectionRectangle.x2,selectionRectangle.y2)
 
                 if(minX < clientX && maxX > clientX && minY < clientY && maxY > clientY){
+                    setSelectionRectangle({...selectionRectangle,mouseX:initialPoint.x,mouseY:initialPoint.y})
                     setMoving(true)
                 }
-                setSelectionRectangle({...selectionRectangle,mouseX:clientX,mouseY:clientY})
                 return
             }
 
 
-            let element = getSelectedElement(clientX, clientY)
-
             if (element) {
 
                 setSelectedElements([element])
-            
-                    let x1 = Math.min(element.x1, element.x2)
-                    let x2 = Math.max(element.x1, element.x2)
-                    let y1 = Math.min(element.y1, element.y2)
-                    let y2 = Math.max(element.y1, element.y2)
-                    setSelectionRectangle({ x1:element.x1, y1:element.y1, x2:element.x2, y2:element.y2 })
         
-            
-                setMoving(true)
-
-            }else{
-
-                setMoving(false)
-                console.log("selection rectangle start")
-                setSelectedElements([])
-                setSelRectMove(true)
-                setSelectionRectangle({ x1: clientX, y1: clientY, x2: clientX, y2: clientY,mouseX:clientX,mouseY:clientY})
-
+                    let {minX,minY,maxX,maxY} = minmax(element.x1,element.y1,element.x2,element.y2)
+                    setSelectionRectangle({ x1:minX, y1:minY, x2:maxX, y2:maxY,mouseX:initialPoint.x,mouseY:initialPoint.y})
+                    setMoving(true)
+                    return
             }
-
             
-
-            return
         }
 
         setDrawing(true);
@@ -126,65 +137,65 @@ const Canvas = () => {
 
     };
   
+    
     const mouseMoveHandler = (e) => {
 
         const { clientX, clientY } = e;
-
+        
         if (tool == "selector") {
+
             canvasRef.current.style.cursor = "pointer";
 
             if(selectionRectangle){
 
-                let minX = Math.min(selectionRectangle.x1, selectionRectangle.x2)
-                let maxX = Math.max(selectionRectangle.x1, selectionRectangle.x2)
-                let minY = Math.min(selectionRectangle.y1, selectionRectangle.y2)
-                let maxY = Math.max(selectionRectangle.y1, selectionRectangle.y2)
+                let {x1,y1,x2,y2} = selectionRectangle
+                let {minX,minY,maxX,maxY} = minmax(x1,y1,x2,y2)
 
                 if(minX < clientX && maxX > clientX && minY < clientY && maxY > clientY){
-                    console.log(minX,clientX,maxX)
                     canvasRef.current.style.cursor = "move";
+                    // console.log("x->",minX,clientX,maxX,"\n y-> ",minY,clientY,maxY)
                 }
 
             }else{
-                canvasRef.current.style.cursor = "pointer";
-
-            }
-
-            if (!selectionRectangle) {
-
                 let selectedElement = getSelectedElement(clientX, clientY)
-                
                 if (selectedElement) {
                     canvasRef.current.style.cursor = "move";
-                } else {
+                }
+                else{
                     canvasRef.current.style.cursor = "pointer";
                 }
 
             }
+            
 
-            if (selRectMove){
+            if (selectRectDrawing){
                 setSelectionRectangle({ ...selectionRectangle, x2: clientX, y2: clientY })
             }
+
             let updatedElementsArray = []
 
 
             if (moving) {
+
+
                 for (let i = 0; i < selectedElements.length; i++) {
+
                     let mouseX,mouseY;
 
                     if(selectedElements.length == 1){
                         
-                        mouseX = selectedElements[0].mouseX;
-                        mouseY = selectedElements[0].mouseY;
-                        console.log(selectedElements)
+                        mouseX = selectedElements[0].mouseX || initialPoint.x;
+                        mouseY = selectedElements[0].mouseY || initialPoint.y;
+                        
                     }else{
-                        mouseX = selectedElements[i].mouseX || selectionRectangle.mouseX;
-                        mouseY = selectedElements[i].mouseY || selectionRectangle.mouseY;
+                        mouseX = selectedElements[i].mouseX || initialPoint.x;
+                        mouseY = selectedElements[i].mouseY || initialPoint.y;
                     }
-                    
+
                     const xOffset = clientX - mouseX
                     const yOffset = clientY - mouseY
-
+                    // console.log("mx",mouseX,"my",mouseY,"xoff,",xOffset,"yoff",yOffset,initialPoint);
+                    
                     let element;
 
                     let x1 = (selectedElements[i].x1 += xOffset)
@@ -212,16 +223,11 @@ const Canvas = () => {
                     }
                     updatedElementsArray.push(element)
 
-                    if(selectedElements.length == 1){
-                        selectedElements[0].mouseX = clientX
-                        selectedElements[0].mouseY = clientY
-                    }
                     selectedElements[i].mouseX = clientX
                     selectedElements[i].mouseY = clientY
                     selectionRectangle.mouseX = clientX
                     selectionRectangle.mouseY = clientY
                 }
-                // console.log(updatedElementsArray)
                 const updatedElements = [...elements];
 
                 for(let i = 0 ; i < updatedElementsArray.length ; i++){
@@ -232,7 +238,6 @@ const Canvas = () => {
                         updatedElementsArray[i].y2,
                         updatedElementsArray[i].shape);
 
-                     console.log(i)
                     updatedElements[updatedElementsArray[i].index] = newElement
                 
                     
@@ -243,13 +248,7 @@ const Canvas = () => {
 
         }
 
-
-        if (!drawing) {
-            return
-        };
-
-
-        if (tool !== "selector" && drawing) {
+        if (drawing) {
             canvasRef.current.style.cursor = "crosshair";
             const index = elements.length - 1;
             const { x1, y1 } = elements[index];
@@ -259,14 +258,20 @@ const Canvas = () => {
             setElements(updatedElements);
         }
 
-
     };
 
     const getElementsInRectangle = (selectionRectangle) => {
 
         let flag = 0
-        let minX = 100000, minY = 100000, maxX = 0, maxY = 0;
+        let min_x = 100000, min_y = 100000, max_x = 0, max_y = 0;
         let elementsInRectangle = []
+
+        let {minX,minY,maxX,maxY} = minmax(selectionRectangle.x1,selectionRectangle.y1,selectionRectangle.x2,selectionRectangle.y2);
+
+        let rectx1 = Math.min(selectionRectangle.x1,selectionRectangle.x2)
+        let recty1 = Math.min(selectionRectangle.y1,selectionRectangle.y2)
+        let rectx2 = Math.max(selectionRectangle.x1,selectionRectangle.x2)
+        let recty2 = Math.max(selectionRectangle.y1,selectionRectangle.y2)
 
         for (let i = 0; i < elements.length; i++) {
 
@@ -274,30 +279,25 @@ const Canvas = () => {
             let y1 = Math.min(elements[i].y1,elements[i].y2)
             let x2 = Math.max(elements[i].x1,elements[i].x2)
             let y2 = Math.max(elements[i].y1,elements[i].y2)
-            let rectx1 = Math.min(selectionRectangle.x1,selectionRectangle.x2)
-            let recty1 = Math.min(selectionRectangle.y1,selectionRectangle.y2)
-            let rectx2 = Math.max(selectionRectangle.x1,selectionRectangle.x2)
-            let recty2 = Math.max(selectionRectangle.y1,selectionRectangle.y2)
     
 
             if (x1 > rectx1 && y1 > recty1 && x2 < rectx2 && y2 < recty2) {
                 flag = 1
                 // console.log("element in rect")
                 // console.log(selectionRectangle)
-                console.log({ x1, y1, x2, y2 })
-                if (minX > x1) {
-                    minX = x1
+                if (min_x > x1) {
+                    min_x = x1
                 }
-                if (minY > y1) {
-                    minY = y1
+                if (min_y > y1) {
+                    min_y = y1
                 }
-                if (maxX < x2) {
-                    maxX = x2
+                if (max_x < x2) {
+                    max_x = x2
                 }
-                if (maxY < y2) {
-                    maxY = y2
+                if (max_y < y2) {
+                    max_y = y2
                 }
-                elementsInRectangle.push({ x1: elements[i].x1, y1: elements[i].y1, x2: elements[i].x2, y2: elements[i].y2, index: i, mouseX: selectionRectangle.mouseX, mouseY: selectionRectangle.mouseY })
+                elementsInRectangle.push({ x1: elements[i].x1, y1: elements[i].y1, x2: elements[i].x2, y2: elements[i].y2, index: i, mouseX: null, mouseY:null})
 
             }
 
@@ -309,7 +309,7 @@ const Canvas = () => {
 
             // console.log({ x1: minX, y1: minY, x2: maxX, y2: maxY })
 
-            return { x1: minX, y1: minY, x2: maxX, y2: maxY ,mouseX: selectionRectangle.mouseX, mouseY: selectionRectangle.mouseY }
+            return { x1: min_x, y1: min_y, x2: max_x, y2: max_y ,mouseX:null, mouseY:null }
 
         } else {
 
@@ -319,18 +319,21 @@ const Canvas = () => {
     }
 
     const mouseUpHandler = (e) => {
+        
+        
         canvasRef.current.style.cursor = "pointer";
-        // console.log(elements);
         setMoving(false)
         setDrawing(false);
-        if (selectionRectangle) {
+
+        if (selectionRectangle && selectRectDrawing) {
             let newSelectionRectangle = getElementsInRectangle(selectionRectangle)
-            // console.log(newSelectionRectangle)
+            // console.log("newSelectionRectangle==",newSelectionRectangle,"moving==",moving,"selectionRectangle==",selectionRectangle)
             
             if (newSelectionRectangle) {
+                // console.log("newSelectionRectangle===",newSelectionRectangle)
                 setSelectionRectangle(newSelectionRectangle)
                 setMoving(false)
-                setSelRectMove(false)
+                setSelectRectDrawing(false)
                 
             }else{
                 
@@ -339,7 +342,7 @@ const Canvas = () => {
 
         }else{
             setSelectionRectangle(null)
-            setSelRectMove(false)
+            setSelectRectDrawing(false)
             setSelectedElements([])
         }
     };
@@ -367,7 +370,6 @@ const Canvas = () => {
         elements.map((element) => { roughCanvas.draw(element.element) });
 
     }, [elements, selectedElements,selectionRectangle]);
-
 
     return (
         <canvas
