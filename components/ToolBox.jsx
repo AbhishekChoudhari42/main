@@ -16,8 +16,8 @@ const ToolBox = () => {
 
   return (
     <div className="flex flex-col justify-center items-center">
-      <div className="absolute top-5  ">
-        <div className=" shadow-[rgba(17,_17,_26,_0.1)_0px_0px_16px] rounded-md mt-2  flex px-4 space-x-2 py-1 justify-between   items-center">
+      <div className="absolute top-5 z-50">
+        <div className="shadow-[rgba(17,_17,_26,_0.1)_0px_0px_16px] rounded-md flex space-x-2 p-2 justify-between bg-white  items-center">
           <div
             className={`p-2  cursor-pointer rounded ${
               tool === "selector" ? "bg-[#bbd0ff] text-white" : ""
