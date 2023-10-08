@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { BiPointer } from "react-icons/bi";
+import { BiPencil, BiPointer } from "react-icons/bi";
 
 import { FaRegCircle } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
@@ -49,6 +49,14 @@ const ToolBox = () => {
             onClick={() => dispatch(changeTool("ellipse"))}
           >
             <FaRegCircle color="#2b2d42" className="font-bold" size={18} />
+          </div>
+          <div
+            className={`p-2  cursor-pointer rounded ${
+              tool === "pencil" ? "bg-[#bbd0ff]" : ""
+            } hover:bg-[#bbd0ff] hover:text-white `}
+            onClick={() => dispatch(changeTool("pencil"))}
+          >
+            <BiPencil color="#2b2d42" className="font-bold" size={18} />
           </div>
         </div>
       </div>

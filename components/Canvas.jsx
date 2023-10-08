@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import rough from "roughjs";
 import { isIntersecting } from "@/utils/collision";
+import getStroke from "perfect-freehand";
+import getSvgPathFromStroke from "@/utils/getSvgPathFromStroke";
 
 const generator = rough.generator();
 
@@ -27,6 +29,7 @@ const generateElement = (x1, y1, x2, y2, tool) => {
                 { roughness: 0.5, fill: 'blue' }
             );
             break;
+        
         default:
             break;
     }
@@ -34,7 +37,9 @@ const generateElement = (x1, y1, x2, y2, tool) => {
 };
 
 
-
+//useState for storing freehand
+// pull from git
+// cleanup the code
 const Canvas = () => {
 
     //for testing
@@ -44,7 +49,10 @@ const Canvas = () => {
     const [elements, setElements] = useState([]);
     const [drawing, setDrawing] = useState(false);
     const [selectedElement, setSelectedElement] = useState(null)
+    const [PerfectPoints,setPerfectPoints] = useState([])
     const canvasRef = useRef(null);
+    // const pathRef = useRef()
+    const [pathList,setPathList] = useState([])
 
     const tool = useSelector((state) => state.toolbox.tool);
     const getSelectedElement = (x, y) => {
@@ -60,8 +68,35 @@ const Canvas = () => {
         return null
     }
 
+    const handlePointerDown = (e) => {
+        console.log(e);
+        e.target.setPointerCapture(e.pointerId)
+        setPerfectPoints([[e.pageX,e.pageY,e.pressure]])
+    }
+    // console.log(PerfectPoints);
 
+    const handlePointerMove = (e) => {
+        if(e.buttons !== 1) return
+        setPerfectPoints([...PerfectPoints,[e.pageX,e.pageY,e.pressure]])
+    } 
+
+    const handlePointerUp = (e) => {
+        const stroke = getStroke(PerfectPoints,{
+            size: 16,
+            thinning: 0.5,
+            smoothing: 0.5,
+            streamline: 0.5,
+        })
+        const pathData = getSvgPathFromStroke(stroke)
+    
+        const canvasPath = new Path2D(pathData)
+
+        
+        setPathList([...pathList,canvasPath])
+    }
+    
     const mouseDownHandler = (e) => {
+        
         const { clientX, clientY } = e;
 
         if (tool == "selector") {
@@ -78,6 +113,7 @@ const Canvas = () => {
         setElements((prev) => [...prev, element]);
 
     };
+
     const mouseMoveHandler = (e) => {
 
         const { clientX, clientY } = e;
@@ -151,7 +187,7 @@ const Canvas = () => {
 
     const mouseUpHandler = (e) => {
         canvasRef.current.style.cursor = "pointer";
-        console.log(elements);
+        // console.log(elements);
         setDrawing(false);
         setSelectedElement(null)
     };
@@ -164,17 +200,29 @@ const Canvas = () => {
         canvas.width = window.innerWidth
         const roughCanvas = rough.canvas(canvas);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        elements.map((element) => roughCanvas.draw(element.element));
-    }, [elements]);
+        elements.map((element) =>  roughCanvas.draw(element.element));
 
+        pathList.map(path => ctx.fill(path))
 
+    }, [elements,pathList]);
+
+    const canvasProps = {}    
+    if(tool === 'pencil') {     
+        canvasProps.onPointerDown = handlePointerDown
+        canvasProps.onPointerUp = handlePointerUp
+        canvasProps.onPointerMove = handlePointerMove
+    }else {
+        canvasProps.onMouseDown = mouseDownHandler
+        canvasProps.onMouseMove = mouseMoveHandler
+        canvasProps.onMouseUp = mouseUpHandler
+    }
+
+    
     return (
         <canvas
             ref={canvasRef}
             className="bg-[#f7f7ff]"
-            onMouseDown={mouseDownHandler}
-            onMouseMove={mouseMoveHandler}
-            onMouseUp={mouseUpHandler}
+            {...canvasProps}
         ></canvas>
     );
 };
