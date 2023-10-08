@@ -80,7 +80,7 @@ const Canvas = () => {
         setPerfectPoints([...PerfectPoints,[e.pageX,e.pageY,e.pressure]])
     } 
 
-    const handlePointerUp = (e) => {
+    // const handlePointerUp = (e) => {
         const stroke = getStroke(PerfectPoints,{
             size: 16,
             thinning: 0.5,
@@ -89,11 +89,13 @@ const Canvas = () => {
         })
         const pathData = getSvgPathFromStroke(stroke)
     
+        // }
+        
+    useEffect(()=>{
         const canvasPath = new Path2D(pathData)
 
-        
         setPathList([...pathList,canvasPath])
-    }
+    },[pathData])
     
     const mouseDownHandler = (e) => {
         
@@ -209,7 +211,7 @@ const Canvas = () => {
     const canvasProps = {}    
     if(tool === 'pencil') {     
         canvasProps.onPointerDown = handlePointerDown
-        canvasProps.onPointerUp = handlePointerUp
+        // canvasProps.onPointerUp = handlePointerUp
         canvasProps.onPointerMove = handlePointerMove
     }else {
         canvasProps.onMouseDown = mouseDownHandler
